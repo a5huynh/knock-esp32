@@ -5,12 +5,16 @@
 class KnockClass: public BLECharacteristicCallbacks, BLEServerCallbacks {
 private:
     bool _is_connected;
+
     static void init();
-    static void setup_wifi();
+
+    void setup_wifi();
+    void setup_ble();
+    void update_wifi_status();
 public:
     KnockClass();
 
-    int setup(char* api_key);
+    int setup(char* api_key, char* device_name);
     bool is_connected();
 
     // BLECharacteristicCallbacks

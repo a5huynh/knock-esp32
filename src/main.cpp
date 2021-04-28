@@ -34,7 +34,7 @@ void setup() {
     digitalWrite(LED_BUILTIN, LOW);
 
     // Knock advertise over BLE and wait for a connection.
-    Knock.setup(API_KEY);
+    Knock.setup(API_KEY, "Knock Knock ESP32");
 }
 
 void loop() {
