@@ -9,18 +9,20 @@ private:
 
     static void init();
 
-    void _print_value(const char* uuid, std::string value);
     void setup_wifi();
     void setup_ble();
-    void update_wifi_status();
+
+    void _print_value(const char* uuid, std::string value);
+    void _notify_wifi_status();
 public:
     KnockClass();
 
-    int setup(char* api_key, char* device_name);
+    int setup(char* api_key, std::string device_name);
     bool is_connected();
+    void notify();
 
     // BLECharacteristicCallbacks
-    void onWrite(BLECharacteristic *pCharacteristic);
+    void onWrite(BLECharacteristic *);
 
     // BLEServerCallbacks
     void onConnect(BLEServer*);

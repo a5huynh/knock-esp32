@@ -67,7 +67,7 @@ void KnockClass::setup_ble() {
         BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE |
         BLECharacteristic::PROPERTY_NOTIFY | BLECharacteristic::PROPERTY_INDICATE
     );
-    update_wifi_status();
+    this->_notify_wifi_status();
 
     chr_wifi_start = pService->createCharacteristic(
         CHAR_WIFI_START,
@@ -85,25 +85,25 @@ void KnockClass::setup_ble() {
 }
 
 void KnockClass::setup_wifi() {
-    Serial.println("Connecting to wifi");
+    Serial.print("[setup_wifi]: Connecting to wifi: ");
+    Serial.print("\""); Serial.print(WIFI_SSID.c_str()); Serial.print("\", ");
+    Serial.print("\""); Serial.print(WIFI_PASS.c_str()); Serial.println("\"");
+
     WiFi.begin(WIFI_SSID.c_str(), WIFI_PASS.c_str());
     while (WiFi.status() != WL_CONNECTED) {
-        update_wifi_status();
+        _notify_wifi_status();
         delay(500);
-        Serial.print(".");
     }
 
-    update_wifi_status();
-    Serial.println("WiFI connected");
-    Serial.println("IP address: ");
-    Serial.println(WiFi.localIP());
+    _notify_wifi_status();
+    Serial.print("WiFI connected, ip address: "); Serial.println(WiFi.localIP());
     this->_is_wifi_connected = true;
 }
 
-int KnockClass::setup(char * api_key, char * device_name) {
-    Serial.println("init knock");
+int KnockClass::setup(char * api_key, std::string device_name) {
+    Serial.println("[knock::setup]: init knock");
     this->init();
-    Serial.println("init ble stack");
+    Serial.println("[knock::setup]: init ble stack");
 
     BLEDevice::init(device_name);
     this->setup_ble();
@@ -115,12 +115,12 @@ bool KnockClass::is_connected() {
     return this->_is_wifi_connected;
 }
 
-void KnockClass::update_wifi_status() {
+void KnockClass::_notify_wifi_status() {
     if (chr_wifi_status) {
         uint8_t status[1];
         status[0] = WiFi.status();
         char buffer[32];
-        sprintf(buffer, "Notifying w/ value: %d", status[0]);
+        sprintf(buffer, "[_notify_wifi_status]: %d", status[0]);
         Serial.println(buffer);
         chr_wifi_status->setValue((uint8_t*)status, 1);
         // Only notify if we're connected
@@ -142,6 +142,10 @@ void KnockClass::_print_value(const char* uuid, std::string value) {
     Serial.println("-----");
 }
 
+void KnockClass::notify() {
+    this->_notify_wifi_status();
+}
+
 // Callbacks for BLECharacteristics & BLEServer
 void KnockClass::onWrite(BLECharacteristic *pCharacteristic) {
     std::string value = pCharacteristic->getValue();
@@ -155,7 +159,6 @@ void KnockClass::onWrite(BLECharacteristic *pCharacteristic) {
     } else if (pCharacteristic->getUUID().equals(CHAR_WIFI_PASS)) {
         preferences.putString(PREF_WIFI_PASS, value.c_str());
     } else if (pCharacteristic->getUUID().equals(CHAR_WIFI_START)) {
-        Serial.println("Attempting to connect to WiFi");
         this->setup_wifi();
     }
 }
@@ -168,7 +171,6 @@ void KnockClass::onConnect(BLEServer *pServer) {
     // Let client know what we have stored. We don't emit the password to keep
     // it safe.
     chr_wifi_ssid->setValue(WIFI_SSID.c_str());
-    update_wifi_status();
 }
 
 void KnockClass::onDisconnect(BLEServer *pServer) {
