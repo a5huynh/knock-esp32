@@ -17,7 +17,7 @@ private:
 public:
     KnockClass();
 
-    int setup(char* api_key, std::string device_name);
+    int setup(std::string device_name);
     bool is_connected();
     void notify();
 

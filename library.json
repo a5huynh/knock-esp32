@@ -1,0 +1,30 @@
+{
+    "name": "knock-esp32",
+    "keywords": "wifi, bluetooth, ble",
+    "description": "Easily configure WiFi access over BLE",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/a5huynh/knock-esp32.git"
+    },
+    "authors": [{
+        "name": "Andrew Huynh",
+        "email": "a5thuynh@gmail.com",
+        "url": "https://athlabs.com",
+        "maintainer": true
+    }],
+    "examples": [
+        {
+            "name": "Demo",
+            "base": "examples/demo",
+            "files": [
+                "platformio.ini",
+                "src/main.cpp",
+                "partitions_custom.csv"
+            ]
+        }
+    ],
+    "license": "MIT",
+    "frameworks": "arduino",
+    "platforms": "*",
+    "version": "0.1.0"
+}

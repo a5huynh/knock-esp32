@@ -1,12 +1,13 @@
 #include <Arduino.h>
 #include <SPI.h>
-#include <WiFI.h>
+#include <WiFi.h>
+
 #include "BLEDevice.h"
 #include "BLEServer.h"
 #include "BLEUUID.h"
-#include "Preferences.h"
-#include "nvs.h"
 #include "nvs_flash.h"
+#include "nvs.h"
+#include "Preferences.h"
 
 #include "knock.h"
 
@@ -15,6 +16,7 @@
 
 // 0x1824 is the GATT service id for "Transport Discovery"
 #define SERVICE_WIFI_SETUP  BLEUUID((uint16_t)0x1824)
+// UUIDs custom to our particular service to make this work.
 #define CHAR_WIFI_SSID      BLEUUID("beefcafe-36e1-4688-b7f5-000000000001")
 #define CHAR_WIFI_PASS      BLEUUID("beefcafe-36e1-4688-b7f5-000000000002")
 #define CHAR_WIFI_STATUS    BLEUUID("beefcafe-36e1-4688-b7f5-000000000003")
@@ -40,9 +42,11 @@ void KnockClass::init() {
 
     WIFI_SSID = preferences.getString(PREF_WIFI_SSID);
     WIFI_PASS = preferences.getString(PREF_WIFI_PASS);
+#ifdef KNOCK_DEBUG
     // Print out stored SSID/PASS for debugging purposes.
     Serial.print("SSID: "); Serial.println(WIFI_SSID);
     Serial.print("PASS: "); Serial.println(WIFI_PASS);
+#endif
 }
 
 void KnockClass::setup_ble() {
@@ -81,26 +85,29 @@ void KnockClass::setup_ble() {
     pAdvertising->addServiceUUID(SERVICE_WIFI_SETUP);
     pAdvertising->setScanResponse(true);
     BLEDevice::startAdvertising();
-    Serial.println("ble advertising start!");
 }
 
 void KnockClass::setup_wifi() {
-    Serial.print("[setup_wifi]: Connecting to wifi: ");
+    Serial.print("[knock::setup_wifi]: Connecting to wifi");
+
+#ifdef KNOCK_DEBUG
     Serial.print("\""); Serial.print(WIFI_SSID.c_str()); Serial.print("\", ");
     Serial.print("\""); Serial.print(WIFI_PASS.c_str()); Serial.println("\"");
+#endif
 
-    WiFi.begin(WIFI_SSID.c_str(), WIFI_PASS.c_str());
+    WiFi.begin((char*)WIFI_SSID.c_str(), WIFI_PASS.c_str());
     while (WiFi.status() != WL_CONNECTED) {
         _notify_wifi_status();
         delay(500);
     }
 
     _notify_wifi_status();
-    Serial.print("WiFI connected, ip address: "); Serial.println(WiFi.localIP());
+    Serial.print("WiFI connected, ip address: ");
+    Serial.println(WiFi.localIP());
     this->_is_wifi_connected = true;
 }
 
-int KnockClass::setup(char * api_key, std::string device_name) {
+int KnockClass::setup(std::string device_name) {
     Serial.println("[knock::setup]: init knock");
     this->init();
     Serial.println("[knock::setup]: init ble stack");
@@ -119,9 +126,13 @@ void KnockClass::_notify_wifi_status() {
     if (chr_wifi_status) {
         uint8_t status[1];
         status[0] = WiFi.status();
+
+#ifdef KNOCK_DEBUG
         char buffer[32];
-        sprintf(buffer, "[_notify_wifi_status]: %d", status[0]);
+        sprintf(buffer, "wifi_status: %d", status[0]);
         Serial.println(buffer);
+#endif
+
         chr_wifi_status->setValue((uint8_t*)status, 1);
         // Only notify if we're connected
         if (this->_is_ble_connected) {
@@ -149,10 +160,13 @@ void KnockClass::notify() {
 // Callbacks for BLECharacteristics & BLEServer
 void KnockClass::onWrite(BLECharacteristic *pCharacteristic) {
     std::string value = pCharacteristic->getValue();
+
+#ifdef KNOCK_DEBUG
     this->_print_value(
         pCharacteristic->getUUID().toString().c_str(),
         value
     );
+#endif
 
     if (pCharacteristic->getUUID().equals(CHAR_WIFI_SSID)) {
         preferences.putString(PREF_WIFI_SSID, value.c_str());
@@ -164,7 +178,7 @@ void KnockClass::onWrite(BLECharacteristic *pCharacteristic) {
 }
 
 void KnockClass::onConnect(BLEServer *pServer) {
-    Serial.println("onConnect");
+    Serial.println("[knock::onConnect]: Connected to client");
     BLEDevice::stopAdvertising();
 
     this->_is_ble_connected = true;
@@ -174,7 +188,7 @@ void KnockClass::onConnect(BLEServer *pServer) {
 }
 
 void KnockClass::onDisconnect(BLEServer *pServer) {
-    Serial.println("onDisconnect");
+    Serial.println("[knock::onDisconnect]: Disconnected from client");
     BLEDevice::startAdvertising();
     this->_is_ble_connected = false;
 }
