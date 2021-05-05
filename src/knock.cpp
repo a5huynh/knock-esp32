@@ -118,7 +118,11 @@ int KnockClass::setup(std::string device_name) {
     return 0;
 }
 
-bool KnockClass::is_connected() {
+bool KnockClass::has_ble_connection() {
+    return this->_is_ble_connected;
+}
+
+bool KnockClass::has_wifi_connection() {
     return this->_is_wifi_connected;
 }
 
@@ -151,6 +155,11 @@ void KnockClass::_print_value(const char* uuid, std::string value) {
     }
     Serial.println();
     Serial.println("-----");
+}
+
+void KnockClass::reset() {
+    preferences.remove(PREF_WIFI_SSID);
+    preferences.remove(PREF_WIFI_PASS);
 }
 
 void KnockClass::notify() {

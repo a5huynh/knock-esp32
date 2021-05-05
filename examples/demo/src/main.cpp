@@ -1,8 +1,7 @@
 #include <Arduino.h>
 #include <ArduinoHttpClient.h>
 #include <WiFi.h>
-// Turn on debug statements from the knock library
-#define KNOCK_DEBUG
+
 #include "knock.h"
 
 WiFiClient wifi_client;
@@ -22,7 +21,7 @@ void setup() {
 }
 
 void loop() {
-    if (Knock.is_connected()) {
+    if (Knock.has_wifi_connection()) {
         // Blink LED to show we're connected.
         digitalWrite(LED_BUILTIN, LED_ON ? HIGH : LOW);
         LED_ON = !LED_ON;
@@ -42,7 +41,8 @@ void loop() {
     }
 
     // Only need to do this if we want to broadcase the WiFi status of this device.
-    Knock.notify();
-    delay(1000);
-
+    if (Knock.has_ble_connection()) {
+        Knock.notify();
+        delay(1000);
+    }
 }

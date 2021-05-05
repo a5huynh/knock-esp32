@@ -16,10 +16,15 @@ private:
     void _notify_wifi_status();
 public:
     KnockClass();
-
     int setup(std::string device_name);
-    bool is_connected();
+    // Are we connected to a BLE client?
+    bool has_ble_connection();
+    // Are we connected to the internet?
+    bool has_wifi_connection();
+    // Clear out the saved SSID & password
+    void reset();
     void notify();
+
 
     // BLECharacteristicCallbacks
     void onWrite(BLECharacteristic *);
