@@ -35,6 +35,7 @@ static String WIFI_PASS;
 KnockClass::KnockClass() {
     _is_ble_connected = false;
     _is_wifi_connected = false;
+    wifi_timeout_ms = 30000;
 }
 
 void KnockClass::init() {
@@ -96,15 +97,30 @@ void KnockClass::setup_wifi() {
 #endif
 
     WiFi.begin((char*)WIFI_SSID.c_str(), WIFI_PASS.c_str());
+
+    // Attempt to connect
+    unsigned long start = millis();
+    unsigned long last_checked = start;
     while (WiFi.status() != WL_CONNECTED) {
         _notify_wifi_status();
         delay(500);
+
+        // If failed to connect, don't get stuck in an infinite loop
+        last_checked = millis();
+        if (
+            last_checked - start >= wifi_timeout_ms
+            || WiFi.status() == WL_CONNECT_FAILED
+        ) {
+            break;
+        }
     }
 
-    _notify_wifi_status();
-    Serial.print("WiFI connected, ip address: ");
-    Serial.println(WiFi.localIP());
-    this->_is_wifi_connected = true;
+    if (WiFi.status() == WL_CONNECTED) {
+        _notify_wifi_status();
+        Serial.print("WiFI connected, ip address: ");
+        Serial.println(WiFi.localIP());
+        this->_is_wifi_connected = true;
+    }
 }
 
 int KnockClass::setup(std::string device_name) {
@@ -114,6 +130,11 @@ int KnockClass::setup(std::string device_name) {
 
     BLEDevice::init(device_name);
     this->setup_ble();
+
+    // If we have a ssid & pass, attempt to connect to it.
+    if (WIFI_PASS.length() > 0 && WIFI_SSID.length() > 0) {
+        this->setup_wifi();
+    }
 
     return 0;
 }
