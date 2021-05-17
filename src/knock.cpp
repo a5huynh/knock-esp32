@@ -179,8 +179,10 @@ void KnockClass::onWrite(BLECharacteristic *pCharacteristic) {
 
     if (pCharacteristic->getUUID().equals(CHAR_WIFI_SSID)) {
         preferences.putString(PREF_WIFI_SSID, value.c_str());
+        WIFI_SSID = value.c_str();
     } else if (pCharacteristic->getUUID().equals(CHAR_WIFI_PASS)) {
         preferences.putString(PREF_WIFI_PASS, value.c_str());
+        WIFI_PASS = value.c_str();
     } else if (pCharacteristic->getUUID().equals(CHAR_WIFI_START)) {
         this->setup_wifi();
     }
