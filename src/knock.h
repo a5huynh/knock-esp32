@@ -6,6 +6,7 @@ class KnockClass: public BLECharacteristicCallbacks, BLEServerCallbacks {
 private:
     bool _is_ble_connected;
     bool _is_wifi_connected;
+    unsigned long wifi_timeout_ms;
 
     static void init();
 
